@@ -1,0 +1,36 @@
+{
+  "name": "@app/room-authority",
+  "version": "0.1.0",
+  "type": "module",
+  "scripts": {
+    "dev": "tsx src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/index.js",
+    "prisma:gen": "prisma generate",
+    "prisma:migrate": "prisma migrate dev --name init"
+  },
+  "dependencies": {
+    "@shared/core": "workspace:*",
+    "@sim/core": "workspace:*",
+    "@ai/helpers": "workspace:*",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "ioredis": "^5.4.1",
+    "prom-client": "^15.1.1",
+    "prisma": "^5.16.1",
+    "@prisma/client": "^5.16.1",
+    "uuid": "^9.0.1",
+    "ws": "^8.17.0",
+    "cors": "^2.8.5"
+  },
+  "devDependencies": {
+    "tsx": "^4.11.0"
+  },
+  "pnpm": {
+    "patchedDependencies": {}
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  }
+}
+

@@ -1,0 +1,11 @@
+{
+  "name": "@sim/core",
+  "version": "0.1.0",
+  "type": "module",
+  "main": "src/index.ts",
+  "scripts": { "build": "tsc -p tsconfig.json" },
+  "dependencies": {
+    "@shared/core": "workspace:*"
+  }
+}
+
