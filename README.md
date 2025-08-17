@@ -16,6 +16,12 @@ Project repo: [J0YY/mazerpc](https://github.com/J0YY/mazerpc.git)
 
 Speedrunning + distributed systems. The fun part is the feeling of a “live authority” that never lies: inputs are speculative; the server keeps you honest. The maze is verifiable from a signed seed, so runs are shareable and replayable.
 
+---
+
+<img width="1470" height="746" alt="Screenshot 2025-08-16 at 7 28 38 PM" src="https://github.com/user-attachments/assets/4b0d76db-b511-4bae-a009-0aae82ecbd94" />
+
+---
+
 ## What’s in the box
 
 - apps/web: Next.js + React Three Fiber client. FPV/Orbit toggle, warm dungeon palette, start/exit beacons, candles, breadcrumb trail, hot/cold proximity panel, local input sampling.
