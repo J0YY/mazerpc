@@ -65,6 +65,23 @@ Speedrunning + distributed systems. The fun part is the feeling of a “live aut
 ## Observability
 
 - `/metrics` exposes Prometheus counters/histograms (tick duration, frame bytes, WS connects, etc.).
+- Health: `/healthz`, Readiness: `/readyz` (checks Redis + DB).
+- SSE event stream: `/events/:roomId/stream` for real‑time log consumption.
+- Optional OpenTelemetry traces (env‑gated):
+  - Set `OTEL_ENABLED=true` and `OTEL_EXPORTER_OTLP_ENDPOINT=http://localhost:4318` to export to an OTEL Collector.
+
+### One‑liner local stack (Prometheus + OTEL Collector + Grafana)
+
+```
+pnpm infra:up
+# This starts Redis, Postgres, Prometheus (:9090), Grafana (:3001), and an OTEL Collector (:4317/4318).
+```
+
+Prometheus scrapes `host.docker.internal:8080/metrics` by default (Docker Desktop Mac). Visit:
+
+- Prometheus: http://localhost:9090
+- Grafana: http://localhost:3001 (admin/admin)
+
 
 ## AI hooks (optional)
 

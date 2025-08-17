@@ -4,7 +4,7 @@ import crypto from "node:crypto";
 import express, { type Request, type Response } from "express";
 import { WebSocketServer, WebSocket } from "ws";
 import Redis from "ioredis";
-import { Registry, collectDefaultMetrics, Counter, Histogram } from "prom-client";
+import { Registry, collectDefaultMetrics, Counter, Histogram, Gauge } from "prom-client";
 import { PrismaClient } from "@prisma/client";
 import { v4 as uuidv4 } from "uuid";
 import cors from "cors";
@@ -45,10 +45,23 @@ collectDefaultMetrics({ register: registry });
 const mWsConnections = new Counter({ name: "ws_connections_total", help: "WS connections", registers:[registry] });
 const mTickDuration = new Histogram({ name: "tick_duration_ms", help: "Tick duration", buckets:[1,2,4,8,16,32], registers:[registry] });
 const mStateFrameBytes = new Histogram({ name: "state_frame_bytes", help: "STATE frame size bytes", buckets:[256,512,1024,2048,4096,8192], registers:[registry] });
+const gPlayers = new Gauge({ name: "players_connected", help: "Players connected per room", labelNames:["room"], registers:[registry] });
 
 app.get("/metrics", async (_req: Request, res: Response) => {
   res.set("Content-Type", registry.contentType);
   res.end(await registry.metrics());
+});
+
+// health / readiness
+app.get("/healthz", (_req: Request, res: Response) => res.json({ ok: true }));
+app.get("/readyz", async (_req: Request, res: Response) => {
+  try {
+    await redis.ping();
+    await prisma.$queryRaw`SELECT 1`;
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(503).json({ ok: false, error: String(err) });
+  }
 });
 
 // --- SIMPLE MODELS --------------------------------------------
@@ -126,6 +139,7 @@ class Room {
       pathCells: [`${this.maze.start.x},${this.maze.start.y}`]
     };
     this.players.set(playerId, p);
+    gPlayers.set({ room: this.id }, this.players.size);
 
     const init: InitMsg = {
       kind: "INIT",
@@ -317,11 +331,41 @@ wss.on("connection", (ws: WebSocket, req: IncomingMessage) => {
   ws.on("close", () => {
     room?.clients.delete(playerId);
     room?.players.delete(playerId);
+    if (room) gPlayers.set({ room: room.id }, room.players.size);
   });
 });
 
 // --- BOOT ------------------------------------------------------
 server.listen(PORT, () => {
   console.log(`Room authority http/ws on :${PORT}`);
+});
+
+// SSE stream of events for a room
+app.get("/events/:roomId/stream", async (req: Request, res: Response) => {
+  const roomId = req.params.roomId;
+  res.setHeader("Content-Type", "text/event-stream");
+  res.setHeader("Cache-Control", "no-cache");
+  res.setHeader("Connection", "keep-alive");
+  let lastId = "$";
+  let alive = true;
+  req.on("close", ()=>{ alive=false; });
+  async function pump(){
+    while(alive){
+      try {
+        const result = await redis.xread("BLOCK", 15000, "COUNT", 100, "STREAMS", `match:${roomId}:events`, lastId);
+        if (result && Array.isArray(result)) {
+          const [_stream, entries] = result[0] as [string, Array<[string, string[]]>];
+          for (const [id, kv] of entries) {
+            lastId = id;
+            const obj: Record<string,string> = {};
+            for (let i=0;i<kv.length;i+=2) obj[kv[i]] = kv[i+1];
+            res.write(`event: event\n`);
+            res.write(`data: ${JSON.stringify({ id, ...obj })}\n\n`);
+          }
+        }
+      } catch {}
+    }
+  }
+  pump();
 });
 

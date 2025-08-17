@@ -21,7 +21,9 @@
     "@prisma/client": "^5.16.1",
     "uuid": "^9.0.1",
     "ws": "^8.17.0",
-    "cors": "^2.8.5"
+    "cors": "^2.8.5",
+    "@opentelemetry/sdk-node": "^0.51.1",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.51.1"
   },
   "devDependencies": {
     "tsx": "^4.11.0"

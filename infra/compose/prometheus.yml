@@ -1,0 +1,15 @@
+global:
+  scrape_interval: 2s
+
+scrape_configs:
+  - job_name: room-authority
+    static_configs:
+      - targets:
+          - host.docker.internal:8080
+        labels:
+          service: room-authority
+  - job_name: redis
+    static_configs:
+      - targets: ["redis:6379"]
+    metrics_path: /metrics
+
